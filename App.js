@@ -2,8 +2,7 @@ import React, { Component } from "react";
 
 import { Image, FlatList, StyleSheet, Text, View } from "react-native";
 
-var REQUEST_URL =
-  "http://193.112.44.172/movie.json";
+var REQUEST_URL ="http://193.112.44.172/movie.json";
 
 export default class SampleAppMovies extends Component {
   constructor(props) {
