@@ -1,8 +1,6 @@
 import React, { Component } from "react";
-
-import { Image, FlatList, StyleSheet, Text, View,TouchableOpacity,TouchableNativeFeedback } from "react-native";
-
-// import StoryList from "StoryList"
+import { Image,Button, FlatList, StyleSheet, Text, View,TouchableNativeFeedback } from "react-native";
+import { withNavigation } from 'react-navigation';
 
 var REQUEST_URL ="http://news-at.zhihu.com/api/4/news/latest";
 
@@ -13,25 +11,26 @@ export default class Main extends Component {
       date:'',
       stories: [],
       topStories: [],
-      loaded: false
+      loaded: false,
+      errorMessage:''
     };
-    this.fetchData = this.fetchData.bind(this);
   }
 
   _keyExtractor = (item, index) => item.id;
 
-  componentDidMount() {
+  componentDidMount=()=> {
     this.fetchData();
   }
 
-  fetchData() {
+  fetchData=()=> {
     fetch(REQUEST_URL)
       .then(response => response.json())
       .then(responseData => {
         // 注意，这里使用了this关键字，为了保证this在调用时仍然指向当前组件，我们需要对其进行“绑定”操作
         this.setState({
           stories: this.state.stories.concat(responseData.stories),
-          loaded: true
+          errorMessage:responseData.error.message,
+          loaded: true,
         });
       })
       .catch(error => {
@@ -40,99 +39,96 @@ export default class Main extends Component {
   }
 
 
-  renderLoadingView() {
+  renderLoadingView=()=> {
     return (
-      <View style={styles.container}>
-        <Text>Loading...</Text>
+      <View style={styles.loading}>
+        <Text style={{fontSize:18}}>Loading...</Text>
       </View>
     );
   }
 
-  selectStory=(story)=>{
-    story.read = true;
-    this.props.navigator.push({
-      title: story.title,
-      name: 'story',
-      story: story,
-    });
-  }
-
-  renderMovie({ item }) {
-    // { item }是一种“解构”写法，请阅读ES2015语法的相关文档
-    // item也是FlatList中固定的参数名，请阅读FlatList的相关文档
+  // 无法 绑定 this 导致 无法 跳转 路由 直接 写在 FlatList中
+  /* renderStory({item}) {
     return (
-      <TouchableNativeFeedback key={{key:item.id}} style={styles.container} onPress={(e) => {this.selectStory(item.id,this)}}>
+      <TouchableNativeFeedback key={{key:item.id}} style={styles.container} onPress={this._listener}>
         <View>
           <Image
             source={{ uri: item.images[0]}}
             style={styles.thumbnail}/>
           <View style={styles.rightContainer}>
-            <Text onPress={this._onPressButton} style={styles.title}>{item.title}</Text>
+            <Text style={styles.title}>{item.title}</Text>
           </View>
         </View>
       </TouchableNativeFeedback>
     );
-  }
+  } */
 
   render() {
-    if (!this.state.loaded) {
-      return this.renderLoadingView();
+
+    if(this.state.errorMessage!==''){
+      return(
+        <View style={styles.loading}>
+          <Text style={{fontSize:18}}>{this.state.errorMessage}</Text>
+        </View>
+      );
     }
 
     return (
+
       <View>
         <FlatList
-          data={this.state.stories}
-          renderItem={this.renderMovie}
-          keyExtractor={this._keyExtractor}
           style={styles.list}
+          data={this.state.stories}//数据
+          keyExtractor={this._keyExtractor}//key
+          onRefresh={this.fetchData} //刷新触发
+          refreshing={!this.state.loaded}//是否刷新中
+          ListEmptyComponent={this.renderLoadingView}//是否为 空
+          //数据渲染
+          renderItem={({item}) => (
+
+            <TouchableNativeFeedback key={{key:item.id}} onPress={ () =>
+                    this.props.navigation.navigate('StoryItem', {
+                    itemId: item.id,
+                  })}>
+              <View style={styles.container}>
+                  <Image
+                    source={{ uri: item.images[0]}}
+                    style={styles.image}/>
+                  <Text style={styles.title}>{item.title}</Text>
+              </View>
+            </TouchableNativeFeedback>
+
+       )}
         />
       </View>
     );
   }
 
-  /* render() {
-    if (!this.state.loaded) {
-      return this.renderLoadingView();
-    }
-
-    return (
-      <View>
-        <FlatList>
-          <StoryList></StoryList>
-        </FlatList>
-      </View>
-    );
-  } */
-
 }
 
-
 var styles = StyleSheet.create({
-  container: {
+  loading:{
     flex: 1,
     flexDirection: "row",
     justifyContent: "center",
+  },
+  container: {
+    flex: 1,
+    flexDirection: "row",
+    justifyContent: "flex-start",
     alignItems: "center",
     backgroundColor: "#F5FCFF"
   },
-  rightContainer: {
-    flex: 1
+  image: {
+    margin:10,
+    width: 100,
+    height: 100
   },
   title: {
-    fontSize: 20,
-    marginBottom: 8,
-    textAlign: "center"
+    flex:1,
+    justifyContent: "flex-start",
+    alignItems: "center",
+    marginRight:30,
+    fontSize:18
   },
-  year: {
-    textAlign: "center"
-  },
-  thumbnail: {
-    width: 53,
-    height: 81
-  },
-  list: {
-    paddingTop: 20,
-    backgroundColor: "#F5FCFF"
-  }
 });
