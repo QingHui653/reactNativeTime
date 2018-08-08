@@ -1,15 +1,20 @@
 import React, { Component } from "react";
 import { Image,Button, FlatList, StyleSheet, Text, View,TouchableNativeFeedback } from "react-native";
 import { withNavigation } from 'react-navigation';
+import moment from 'moment'
 
-var REQUEST_URL ="http://news-at.zhihu.com/api/4/news/latest";
+var LAST_URL ="http://news-at.zhihu.com/api/4/news/latest";
+var BEFORE_URL ="http://news.at.zhihu.com/api/4/news/before/";
 
 export default class Main extends Component {
   constructor(props) {
     super(props);
     this.state = {
       date:'',
+      beforeDate:'',
       stories: [],
+      LastStory:[],
+      beforeStory:[],
       topStories: [],
       loaded: false,
       errorMessage:''
@@ -19,9 +24,10 @@ export default class Main extends Component {
   _keyExtractor = (item, index) => item.id;
 
   componentDidMount=()=> {
-    this.fetchData();
+    this.fetchData('last');
   }
 
+<<<<<<< HEAD
   fetchData=()=> {
     fetch(REQUEST_URL)
       .then(response => response.json())
@@ -42,8 +48,53 @@ export default class Main extends Component {
       .catch(error => {
         console.error(error);
       });
+=======
+  fetchData=(type)=>{
+    var url =LAST_URL;
+    if(type=='before'){
+        var date = moment().subtract(1,'days').format('YYYYMMDD')
+        if(this.state.date!=''){
+            date = moment(this.state.date,'YYYYMMDD').subtract(1,'days').format('YYYYMMDD')
+        }
+        url =BEFORE_URL+date; 
+    }
+    console.info(url);
+    fetch(url)
+        .then(response => response.json())
+        .then(responseData => {
+            if(responseData.stories!=null){
+                if(type=='last'){
+                    this.setState({
+                      LastStory: responseData.stories,
+                      loaded: true,
+                    });
+                }else{
+                    this.setState({
+                      date: responseData.date,
+                      loaded: true,
+                      beforeStory: this.state.beforeStory.concat(responseData.stories),
+                    });
+                }
+
+                this.setState({
+                  stories: this.state.LastStory.concat(this.state.beforeStory),
+                });
+            }else if (responseData.error!=null) {
+                this.setState({
+                  errorMessage:responseData.error.message,
+                });
+            }
+        })
   }
 
+  fetchLast=()=> {
+    this.fetchData('last');
+>>>>>>> aa4fffaf30ae70a69f912accd27fc1a5f71db0ff
+  }
+
+  fetchBefore=()=>{
+    this.fetchData('before');
+  }
 
   renderLoadingView=()=> {
     return (
@@ -87,7 +138,9 @@ export default class Main extends Component {
           style={styles.list}
           data={this.state.stories}//数据
           keyExtractor={this._keyExtractor}//key
-          onRefresh={this.fetchData} //刷新触发
+          onRefresh={this.fetchLast} //刷新触发
+          onEndReachedThreshold={0.3}
+          onEndReached={this.fetchBefore} 
           refreshing={!this.state.loaded}//是否刷新中
           ListEmptyComponent={this.renderLoadingView}//是否为 空
           //数据渲染
