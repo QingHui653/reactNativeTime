@@ -27,28 +27,6 @@ export default class Main extends Component {
     this.fetchData('last');
   }
 
-<<<<<<< HEAD
-  fetchData=()=> {
-    fetch(REQUEST_URL)
-      .then(response => response.json())
-      .then(responseData => {
-        console.info(responseData);
-        if(responseData.stories){
-          this.setState({
-            stories: this.state.stories.concat(responseData.stories),
-            loaded: true,
-          });
-        }else if (responseData.error){
-          this.setState({
-            errorMessage:responseData.error.message,
-          });
-        }
-        
-      })
-      .catch(error => {
-        console.error(error);
-      });
-=======
   fetchData=(type)=>{
     var url =LAST_URL;
     if(type=='before'){
@@ -62,7 +40,7 @@ export default class Main extends Component {
     fetch(url)
         .then(response => response.json())
         .then(responseData => {
-            if(responseData.stories!=null){
+            if(responseData.stories){
                 if(type=='last'){
                     this.setState({
                       LastStory: responseData.stories,
@@ -79,7 +57,7 @@ export default class Main extends Component {
                 this.setState({
                   stories: this.state.LastStory.concat(this.state.beforeStory),
                 });
-            }else if (responseData.error!=null) {
+            }else if (responseData.error) {
                 this.setState({
                   errorMessage:responseData.error.message,
                 });
@@ -89,7 +67,6 @@ export default class Main extends Component {
 
   fetchLast=()=> {
     this.fetchData('last');
->>>>>>> aa4fffaf30ae70a69f912accd27fc1a5f71db0ff
   }
 
   fetchBefore=()=>{
@@ -139,7 +116,7 @@ export default class Main extends Component {
           data={this.state.stories}//数据
           keyExtractor={this._keyExtractor}//key
           onRefresh={this.fetchLast} //刷新触发
-          onEndReachedThreshold={0.3}
+          onEndReachedThreshold={0.5}
           onEndReached={this.fetchBefore} 
           refreshing={!this.state.loaded}//是否刷新中
           ListEmptyComponent={this.renderLoadingView}//是否为 空
